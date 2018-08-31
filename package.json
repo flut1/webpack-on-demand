@@ -1,7 +1,7 @@
 {
   "name": "webpack-on-demand",
   "version": "0.1.0",
-  "description": "",
+  "description": "Build modules on demand in webpack development servers",
   "main": "./index.js",
   "types": "./index.d.ts",
   "scripts": {
@@ -37,20 +37,20 @@
   "pre-push": [
     "validate"
   ],
-  "author": "Arjan van Wijk <arjan@mediamonks.com> (https://github.com/thanarie)",
-  "homepage": "https://www.mediamonks.com/",
+  "author": "Floris Bernard <floris.bernard@gmail.com> (https://github.com/flut1)",
   "license": "MIT",
   "keywords": [
-    "seng",
-    "mediamonks",
-    "boilerplate"
+    "webpack",
+    "hmr",
+    "on demand",
+    "hack"
   ],
   "bugs": {
-    "url": "https://github.com/mediamonks/seng-boilerplate/issues"
+    "url": "https://github.com/flut1/webpack-on-demand/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mediamonks/seng-boilerplate.git"
+    "url": "https://github.com/flut1/webpack-on-demand.git"
   },
   "devDependencies": {
     "@babel/cli": "^7.0.0-beta.35",
