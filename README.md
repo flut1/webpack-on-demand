@@ -39,12 +39,20 @@ In `webpack.config.js`:
    ],
    ```
 
+ - Disable `splitChunks`:
+   ```
+   optimization: {
+     ...
+     splitChunks: false
+   },
+   ```
+
  - Pass the plugin server bootstrap to the `before` option of `devServer`
    ```
    devServer: {
       ...
       before: wodPluginInstance.serverBootstrap
-   }
+   },
    ```
 
 # Usage instructions
