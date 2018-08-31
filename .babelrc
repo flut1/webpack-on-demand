@@ -1,0 +1,34 @@
+{
+  "presets": [
+    ["@babel/env", {
+      "targets": {
+        "browsers": ["last 2 versions"],
+        "node": "6"
+      },
+      "loose": true,
+      "useBuiltIns": false
+    }],
+    "@babel/preset-stage-3",
+    "@babel/typescript"
+  ],
+  "plugins": [
+    ["@babel/plugin-transform-runtime", {
+      "helpers": true,
+      "polyfill": false,
+      "regenerator": false,
+      "moduleName": "@babel/runtime"
+    }]
+  ],
+  "env": {
+    "test": {
+      "plugins": [
+        "./test/_setup/arrow-function-coverage-fix.js",
+        "istanbul"
+      ]
+    }
+  },
+  "ignore": [
+    "src/lib/vendor/**/*.*",
+    "./test/_setup/arrow-function-coverage-fix.js"
+  ]
+}
