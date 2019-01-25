@@ -1,6 +1,6 @@
 {
   "name": "webpack-on-demand",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Build modules on demand in webpack development servers",
   "main": "./index.js",
   "types": "./index.d.ts",

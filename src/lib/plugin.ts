@@ -61,8 +61,6 @@ class WebpackOnDemandPlugin implements Plugin {
             });
           }
 
-          console.log(newRequest.request);
-
           return resolver.doResolve(
             resolveHook,
             newRequest,
