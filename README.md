@@ -77,3 +77,23 @@ normally but it will still be wrapped in a callback for consistency.
 
 Note: if the same module is imported elsewhere without the ?on-demand
 query string, it will still compile immediately.
+
+## How does it work? 
+The on-demand compilation is triggered by (ab)using the HMR functionality in webpack.
+Here is a short rundown:
+
+ - Requests with an `?on-demand` query are picked up by the plugin
+ - The plugin resolves this request to a `{hash}.js` file that is created on-the-fly inside this node module
+ - The `{hash}.js` file:
+   - requires another file, `{hash}-mod.js`, which is also created on-the-fly
+   - accepts HMR updates for `{hash}-mod.js`
+   - exports a function that returns a promise
+ - Initially, `{hash}-mod.js` simply exports `null`
+ - Once you call the function exported from `{hash}.js`, a call goes out to `webpack-dev-server`
+ - The dev server responds to this call by overwriting the contents of `{hash}-mod.js`, with a `require` 
+ statement to the module you are trying to load
+ - This triggers an incremental webpack compile
+ - `{hash}.js` accepts the HMR update from `{hash}-mod.js`, and resolves the promise with the new module
+ 
+
+
