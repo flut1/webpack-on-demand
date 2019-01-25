@@ -1,15 +1,16 @@
 # Webpack on Demand
 
-> **IMPORTANT:** This is a dirty hack. Please wash hands after usage.
+## Motivation
+
+This is an experimental webpack plugin that enables you to only compile
+modules once they are requested by the browser. This may be useful
+for development on large projects, as it is likely developers are only
+working on a small section of the application at any time.
+
+> **IMPORTANT:** This is an experimental and somewhat hacky plugin.
 Please do not expect it to work without issues
 
-
 ## Installation
-
-> The current version breaks on production because the on-demand stuff
-is always enabled. Will add automatic disable of the on-demand
-functionality soon-ish
-
 Install the package
 
 ```
