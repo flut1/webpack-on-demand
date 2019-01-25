@@ -10,7 +10,7 @@ interface OnDemandServer {
   registerDependency(dep: string): string;
 }
 
-export default function server() {
+export default function server(installCallback: () => void) {
   const dependencies: { [hash: string]: OnDemandDependency } = {};
   let writing: Promise<void> | null = null;
 
@@ -62,6 +62,7 @@ export default function server() {
   }
 
   const install = <OnDemandServer>function(app: Application) {
+    installCallback();
     fs.emptyDirSync(ON_DEMAND_CACHE_LOCATION);
 
     app.get('/webpack-on-demand/:hash', (req, res) => {
