@@ -47,8 +47,11 @@ In `webpack.config.js`:
       before: wodPluginInstance.serverBootstrap
    },
    ```
+   
+## Demo
+See: https://github.com/flut1/webpack-on-demand-demo
 
-# Usage instructions
+## Usage instructions
 
 Add the `?on-demand` query string to an import statement. This will wrap
 the import in a callback that returns a Promise.
