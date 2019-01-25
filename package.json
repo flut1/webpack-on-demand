@@ -7,7 +7,7 @@
   "scripts": {
     "prepublishOnly": "npm-run-all -s build",
     "dev": "npm-run-all -p dev:*",
-    "dev:babel": "babel ./src -x \".ts\" --out-dir ./ --watch",
+    "dev:babel": "babel ./src -x \".ts,.js\" --out-dir ./ --watch",
     "dev:ts": "tsc --noEmit --allowJs --watch",
     "build": "npm-run-all -s clean build:*",
     "build:babel": "babel ./src -x \".ts\" -x \".js\" --out-dir ./",

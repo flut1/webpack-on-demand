@@ -3,8 +3,7 @@ import path from 'path';
 import fs from 'fs-extra';
 import md5 from 'md5';
 import OnDemandDependency from './OnDemandDependency';
-
-export const onDemandCacheLocation = path.join(__dirname, './.on-demand-cache');
+import { ON_DEMAND_CACHE_LOCATION } from './constants';
 
 interface OnDemandServer {
   (app: Application): void;
@@ -21,49 +20,9 @@ export default function server() {
     fs.utimesSync(path, then, then);
   }
 
-  // function writeMapFile(hash: string, incremental = false): void {
-  //   const contents = contexts[hash].getMapFile();
-  //   const mapPath = path.join(onDemandCacheLocation, `${hash}-map.js`);
-  //   if (incremental) {
-  //     if (writing) {
-  //       writing.then(() => writeMapFile(hash, incremental));
-  //       return;
-  //     }
-  //     writing = new Promise(resolve => {
-  //       const stream = fs.createWriteStream(mapPath, { flags: 'w', encoding: 'utf8' });
-  //       stream.end(contents, 'utf8', resolve);
-  //     });
-  //
-  //     writing.then(() => {
-  //       writing = null;
-  //     });
-  //   } else {
-  //     fs.writeFileSync(mapPath, contents, {
-  //       encoding: 'utf8',
-  //     });
-  //     fixFileTimes(mapPath);
-  //   }
-  // }
-
-  // function writeContextFile(hash: string): void {
-  //   const template = fs.readFileSync(path.join(__dirname, '../template/on-demand-context.js'), {
-  //     encoding: 'utf8',
-  //   });
-  //   const mapFilePath = JSON.stringify(path.resolve(onDemandCacheLocation, hash + '-map'));
-  //   const contextPath = path.join(onDemandCacheLocation, `${hash}.js`);
-  //   fs.writeFileSync(
-  //     contextPath,
-  //     template.replace(/CONTEXT_HASH/g, hash).replace(/CONTEXT_MAP_FILE/g, mapFilePath),
-  //     {
-  //       encoding: 'utf8',
-  //     },
-  //   );
-  //   fixFileTimes(contextPath);
-  // }
-
   function writeModFile(hash: string, incremental = false) {
     const contents = dependencies[hash].getContents();
-    const modPath = path.resolve(onDemandCacheLocation, hash + '-mod.js');
+    const modPath = path.resolve(ON_DEMAND_CACHE_LOCATION, hash + '-mod.js');
 
     if (incremental) {
       if (writing) {
@@ -90,20 +49,20 @@ export default function server() {
     const template = fs.readFileSync(path.join(__dirname, '../template/on-demand-module.js'), {
       encoding: 'utf8',
     });
-    const modFilePath = JSON.stringify(path.resolve(onDemandCacheLocation, hash + '-mod'));
-    const contextPath = path.join(onDemandCacheLocation, `${hash}.js`);
+    const modFilePath = JSON.stringify(path.resolve(ON_DEMAND_CACHE_LOCATION, hash + '-mod'));
+    const depFilePath = path.join(ON_DEMAND_CACHE_LOCATION, `${hash}.js`);
     fs.writeFileSync(
-      contextPath,
+      depFilePath,
       template.replace(/MOD_HASH/g, hash).replace(/MOD_FILE/g, modFilePath),
       {
         encoding: 'utf8',
       },
     );
-    fixFileTimes(contextPath);
+    fixFileTimes(depFilePath);
   }
 
   const install = <OnDemandServer>function(app: Application) {
-    fs.emptyDirSync(onDemandCacheLocation);
+    fs.emptyDirSync(ON_DEMAND_CACHE_LOCATION);
 
     app.get('/webpack-on-demand/:hash', (req, res) => {
       if (!dependencies[req.params.hash]) {
