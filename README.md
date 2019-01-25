@@ -30,21 +30,13 @@ In `webpack.config.js`:
 
  - Enable Hot Module Reloading for your dev server
 
- - Add the plugin to the webpack
+ - Add the plugin to the webpack **resolve config**
    ```
-   plugins: [
-     wodPluginInstance,
-     // only add HMR plugin if you're not already using the --hot CLI flag
-     new webpack.HotModuleReplacementPlugin()
-   ],
-   ```
-
- - Disable `splitChunks`:
-   ```
-   optimization: {
-     ...
-     splitChunks: false
-   },
+   resolve: {
+     plugins: [
+       wodPluginInstance
+     ],
+   }
    ```
 
  - Pass the plugin server bootstrap to the `before` option of `devServer`
@@ -57,31 +49,27 @@ In `webpack.config.js`:
 
 # Usage instructions
 
-First you need to create a context with the files to load. This is similar
-to how you would use `require.context`.
+Add the `?on-demand` query string to an import statement. This will wrap
+the import in a callback that returns a Promise.
 
 ```
-const componentsContext = onDemandContext('components/*/index.js');
-```
+// before
+import HomePage from './components/HomePage';
 
-Please note that the argument passed to this is a glob pattern that will
-be passed to [node-glob](https://github.com/isaacs/node-glob). This means
-that it is not possible to use things like webpack aliases or loaders
-here. You will also need to account for the `.js` file extension
+const HomePage = new HomePage();
 
-You can get a list of all paths found in the context by calling the
-`.keys()` function, similar to how `require.context` works:
+// after
+import getHomePage from './components/HomePage?on-demand';
 
-```
-const listOfModules = componentsContext.keys();
-```
-
-If you want to use a module, pass the path of the module to the context
-created by `onDemandContext`. It will return a promise that resolves
-with the module once it is compiled.
-
-```
-componentsContext('./components/NavBar/index.js').then((IndexComponent) => {
-  // use IndexComponent
+getHomePage().then(HomePage => {
+  const HomePage = new HomePage();
 });
 ```
+
+The module will only be compiled once the callback function (in the
+above example `getHomePage()`) is called. If you're not using the
+development server but a regular build, the import will compile
+normally but it will still be wrapped in a callback for consistency.
+
+Note: if the same module is imported elsewhere without the ?on-demand
+query string, it will still compile immediately.
