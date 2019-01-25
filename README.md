@@ -4,7 +4,7 @@
 
 This is an experimental webpack plugin that enables you to only compile
 modules once they are requested by the browser. This may be useful
-for the develeopment server on large projects, as it is likely developers are
+for the development server on large projects, as it is likely developers are
 only working on a small section of the application at any time.
 
 > **IMPORTANT:** This is an experimental and somewhat hacky plugin.
