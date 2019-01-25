@@ -1,49 +1,48 @@
-import { Compiler, Plugin } from 'webpack';
-import ParserHelpers from 'webpack/lib/ParserHelpers';
+import { Plugin } from 'webpack';
 import serverBootstrap from './server';
-import { getContextOptions } from './contextOptions';
-import { CONTEXT_FUNC_NAME, PLUGIN_NAME } from './constants';
-
-// @ts-ignore
-function superConsole(...args: Array<any>) {
-  for (let i = 0; i < 10; i++) {
-    console.log('');
-  }
-  console.log(...args);
-  for (let i = 0; i < 10; i++) {
-    console.log('');
-  }
-}
+import { PLUGIN_NAME } from './constants';
 
 class WebpackOnDemandPlugin implements Plugin {
-  public serverBootstrap: ReturnType<typeof serverBootstrap>;
+  private _serverBootstrap: ReturnType<typeof serverBootstrap>;
+  private enabled: boolean = false;
 
   constructor() {
-    this.serverBootstrap = serverBootstrap();
+    this._serverBootstrap = serverBootstrap();
   }
 
-  public apply(compiler: Compiler) {
-    compiler.hooks.compilation.tap(PLUGIN_NAME, (_compilation, { normalModuleFactory }) => {
-      const handler = (parser: any) => {
-        parser.hooks.call.for(CONTEXT_FUNC_NAME).tap(PLUGIN_NAME, (expression: any) => {
-          const options = getContextOptions(expression.arguments, parser.state.module.context);
-          const argsHash = this.serverBootstrap.registerContext(
-            options,
-            parser.state.module.context,
-          );
+  public get serverBootstrap(): ReturnType<typeof serverBootstrap> {
+    this.enabled = true;
+    return this._serverBootstrap;
+  }
 
-          return ParserHelpers.addParsedVariableToModule(
-            parser,
-            CONTEXT_FUNC_NAME,
-            `require("webpack-on-demand/lib/.on-demand-cache/${argsHash}").default`,
-          );
-        });
-      };
+  public apply(resolver: any) {
+    if (!this.enabled) {
+      console.log('WebpackOnDemandPlugin is disabled because serverBootstrap was not attached');
+      return;
+    }
+    const resolveHook = resolver.ensureHook('resolve');
 
-      normalModuleFactory.hooks.parser.for('javascript/auto').tap(PLUGIN_NAME, handler);
-      normalModuleFactory.hooks.parser.for('javascript/dynamic').tap(PLUGIN_NAME, handler);
-      normalModuleFactory.hooks.parser.for('javascript/esm').tap(PLUGIN_NAME, handler);
-    });
+    resolver
+      .getHook('existing-file')
+      .tapAsync(PLUGIN_NAME, (request: any, resolveContext: any, callback: () => void) => {
+        if (request && request.query && request.query.includes('on-demand')) {
+          const modHash = this.serverBootstrap!.registerDependency(request.path);
+
+          const newRequest = Object.assign({}, request, {
+            request: `webpack-on-demand/lib/.on-demand-cache/${modHash}`,
+            query: '',
+          });
+
+          return resolver.doResolve(
+            resolveHook,
+            newRequest,
+            `resolve ${newRequest.request}`,
+            callback,
+          );
+        }
+
+        callback();
+      });
   }
 }
 

@@ -3,20 +3,19 @@
     ["@babel/env", {
       "targets": {
         "browsers": ["last 2 versions"],
-        "node": "6"
+        "node": "8"
       },
       "loose": true,
       "useBuiltIns": false
     }],
-    "@babel/preset-stage-3",
-    "@babel/typescript"
+    "@babel/preset-typescript"
   ],
   "plugins": [
+    "@babel/proposal-class-properties",
+    "@babel/proposal-object-rest-spread",
     ["@babel/plugin-transform-runtime", {
       "helpers": true,
-      "polyfill": false,
-      "regenerator": false,
-      "moduleName": "@babel/runtime"
+      "regenerator": false
     }]
   ],
   "env": {

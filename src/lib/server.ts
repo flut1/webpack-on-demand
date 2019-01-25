@@ -2,18 +2,17 @@ import { Application } from 'express';
 import path from 'path';
 import fs from 'fs-extra';
 import md5 from 'md5';
-import { ContextOptions } from './contextOptions';
-import { OnDemandContext } from './context';
+import OnDemandDependency from './OnDemandDependency';
 
 export const onDemandCacheLocation = path.join(__dirname, './.on-demand-cache');
 
 interface OnDemandServer {
   (app: Application): void;
-  registerContext(options: ContextOptions, moduleContext: string): string;
+  registerDependency(dep: string): string;
 }
 
-export default function server(): OnDemandServer {
-  const contexts: { [hash: string]: OnDemandContext } = {};
+export default function server() {
+  const dependencies: { [hash: string]: OnDemandDependency } = {};
   let writing: Promise<void> | null = null;
 
   function fixFileTimes(path: string): void {
@@ -22,16 +21,57 @@ export default function server(): OnDemandServer {
     fs.utimesSync(path, then, then);
   }
 
-  function writeMapFile(hash: string, incremental = false): void {
-    const contents = contexts[hash].getMapFile();
-    const mapPath = path.join(onDemandCacheLocation, `${hash}-map.js`);
+  // function writeMapFile(hash: string, incremental = false): void {
+  //   const contents = contexts[hash].getMapFile();
+  //   const mapPath = path.join(onDemandCacheLocation, `${hash}-map.js`);
+  //   if (incremental) {
+  //     if (writing) {
+  //       writing.then(() => writeMapFile(hash, incremental));
+  //       return;
+  //     }
+  //     writing = new Promise(resolve => {
+  //       const stream = fs.createWriteStream(mapPath, { flags: 'w', encoding: 'utf8' });
+  //       stream.end(contents, 'utf8', resolve);
+  //     });
+  //
+  //     writing.then(() => {
+  //       writing = null;
+  //     });
+  //   } else {
+  //     fs.writeFileSync(mapPath, contents, {
+  //       encoding: 'utf8',
+  //     });
+  //     fixFileTimes(mapPath);
+  //   }
+  // }
+
+  // function writeContextFile(hash: string): void {
+  //   const template = fs.readFileSync(path.join(__dirname, '../template/on-demand-context.js'), {
+  //     encoding: 'utf8',
+  //   });
+  //   const mapFilePath = JSON.stringify(path.resolve(onDemandCacheLocation, hash + '-map'));
+  //   const contextPath = path.join(onDemandCacheLocation, `${hash}.js`);
+  //   fs.writeFileSync(
+  //     contextPath,
+  //     template.replace(/CONTEXT_HASH/g, hash).replace(/CONTEXT_MAP_FILE/g, mapFilePath),
+  //     {
+  //       encoding: 'utf8',
+  //     },
+  //   );
+  //   fixFileTimes(contextPath);
+  // }
+
+  function writeModFile(hash: string, incremental = false) {
+    const contents = dependencies[hash].getContents();
+    const modPath = path.resolve(onDemandCacheLocation, hash + '-mod.js');
+
     if (incremental) {
       if (writing) {
-        writing.then(() => writeMapFile(hash, incremental));
+        writing.then(() => writeModFile(hash, incremental));
         return;
       }
       writing = new Promise(resolve => {
-        const stream = fs.createWriteStream(mapPath, { flags: 'w', encoding: 'utf8' });
+        const stream = fs.createWriteStream(modPath, { flags: 'w', encoding: 'utf8' });
         stream.end(contents, 'utf8', resolve);
       });
 
@@ -39,22 +79,22 @@ export default function server(): OnDemandServer {
         writing = null;
       });
     } else {
-      fs.writeFileSync(mapPath, contents, {
+      fs.writeFileSync(modPath, contents, {
         encoding: 'utf8',
       });
-      fixFileTimes(mapPath);
+      fixFileTimes(modPath);
     }
   }
 
-  function writeContextFile(hash: string): void {
-    const template = fs.readFileSync(path.join(__dirname, '../template/on-demand-context.js'), {
+  function writeDepFile(hash: string): void {
+    const template = fs.readFileSync(path.join(__dirname, '../template/on-demand-module.js'), {
       encoding: 'utf8',
     });
-    const mapFilePath = JSON.stringify(path.resolve(onDemandCacheLocation, hash + '-map'));
+    const modFilePath = JSON.stringify(path.resolve(onDemandCacheLocation, hash + '-mod'));
     const contextPath = path.join(onDemandCacheLocation, `${hash}.js`);
     fs.writeFileSync(
       contextPath,
-      template.replace(/CONTEXT_HASH/g, hash).replace(/CONTEXT_MAP_FILE/g, mapFilePath),
+      template.replace(/MOD_HASH/g, hash).replace(/MOD_FILE/g, modFilePath),
       {
         encoding: 'utf8',
       },
@@ -66,32 +106,31 @@ export default function server(): OnDemandServer {
     fs.emptyDirSync(onDemandCacheLocation);
 
     app.get('/webpack-on-demand/:hash', (req, res) => {
-      if (req.query && req.query.file) {
-        if (!contexts[req.params.hash]) {
-          res.status(500).send('could not find context');
-          return;
-        }
-        if (contexts[req.params.hash].loadFile(req.query.file)) {
-          writeMapFile(req.params.hash, true);
-        }
-        res.sendStatus(204);
+      if (!dependencies[req.params.hash]) {
+        res.status(500).send(`could not find dependency with hash ${req.params.hash}`);
         return;
       }
-      res.status(500).send('no file');
+
+      if (dependencies[req.params.hash].load()) {
+        writeModFile(req.params.hash, true);
+      }
+
+      res.sendStatus(204);
+      return;
     });
   };
 
-  install.registerContext = (options: ContextOptions) => {
-    const argsHash = md5(options.cacheKey);
+  install.registerDependency = (dep: string) => {
+    const modHash = md5(dep);
 
-    if (!contexts[argsHash]) {
-      contexts[argsHash] = new OnDemandContext(options);
+    if (!dependencies[modHash]) {
+      dependencies[modHash] = new OnDemandDependency(dep);
     }
 
-    writeContextFile(argsHash);
-    writeMapFile(argsHash);
+    writeDepFile(modHash);
+    writeModFile(modHash);
 
-    return argsHash;
+    return modHash;
   };
 
   return install;

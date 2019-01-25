@@ -6,7 +6,7 @@
   "defaultSeverity": "error",
   "rules": {
     "no-debugger": 2,
-    "no-console": 1,
+    "no-console": false,
     "prefer-array-literal": [true, { "allow-type-parameters": true }],
     "variable-name": [
       true,
